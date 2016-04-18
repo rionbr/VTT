@@ -1,7 +1,7 @@
 Variable Trigonometric Threshold (VTT)
 ==========================================
 
-This is a linear classifier to be used in conjunction with the Scikit Learn python package.
+A machine learning linear classifier to be used in conjunction with the Scikit Learn python package 
 
 Installation:
 ---------------
