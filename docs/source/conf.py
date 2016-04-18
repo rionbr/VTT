@@ -44,8 +44,6 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
     'sphinxcontrib.googleanalytics',
-    'sphinxtogithub',
-
 ]
 
 # Google Analytcis
