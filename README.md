@@ -9,7 +9,7 @@ Installation:
 This package is available on Pypi. Just run the following command on terminal to install.
 
 ```
-    $pip install vtt
+  $ pip install vtt
 ```
 
 You can also source the code directly from the github [project page](https://github.com/rionbr/vtt).
@@ -17,7 +17,7 @@ You can also source the code directly from the github [project page](https://git
 Docs:
 ------
 
-The full documentation can be found at: [rionbr.github.io/vtt](https://rionbr.github.io/vtt)
+The full documentation can be found at: [rionbr.github.io/VTT](https://rionbr.github.io/VTT)
 
 Papers:
 --------
