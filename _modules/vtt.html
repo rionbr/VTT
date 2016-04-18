@@ -1,0 +1,345 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-71404006-3']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>vtt &mdash; Variable Trigonometric Threshold 0.3.0b1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Variable Trigonometric Threshold 0.3.0b1 documentation" href="../index.html"/>
+        <link rel="up" title="Module code" href="index.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Variable Trigonometric Threshold
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notes.html">Development</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">Variable Trigonometric Threshold</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">Module code</a> &raquo;</li>
+      
+    <li>vtt</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for vtt</h1><div class="highlight"><pre>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A linear classifier to be used in conjunction with the Scikit Learn python package.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1">#    Copyright (C) 2016 by</span>
+<span class="c1">#    Luis Rocha &lt;rocha@indiana.edu&gt;</span>
+<span class="c1">#    Artemy Kolchinsky &lt;artemyk@gmail.com &gt;</span>
+<span class="c1">#    Rion Brattig Correia &lt;rionbr@gmail.com&gt;</span>
+<span class="c1">#    Ian B Wood &lt;ibwood@indiana.edu &gt;</span>
+<span class="c1">#    All rights reserved.</span>
+<span class="c1">#    MIT license.</span>
+<span class="kn">from</span> <span class="nn">sklearn.base</span> <span class="kn">import</span> <span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">TransformerMixin</span>
+<span class="kn">from</span> <span class="nn">sklearn.linear_model.base</span> <span class="kn">import</span> <span class="n">LinearClassifierMixin</span>
+<span class="kn">from</span> <span class="nn">sklearn.utils.multiclass</span> <span class="kn">import</span> <span class="n">unique_labels</span>
+<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="kn">import</span> <span class="n">csr_matrix</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="n">__name__</span> <span class="o">=</span> <span class="s1">&#39;vtt&#39;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;0.3&#39;</span>
+<span class="n">__release__</span> <span class="o">=</span> <span class="s1">&#39;0.3.0b1&#39;</span>
+<span class="n">__authors__</span> <span class="o">=</span> <span class="s1">&#39; and &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;Luis M. Rocha&#39;</span><span class="p">,</span> <span class="s1">&#39;Artemy Kolchinsky&#39;</span><span class="p">,</span> <span class="s1">&#39;Rion Brattig Correia&#39;</span><span class="p">,</span> <span class="s1">&#39;Ian B. Wood&#39;</span><span class="p">])</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;VTT&#39;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="VTT"><a class="viewcode-back" href="../reference/vtt.html#vtt.VTT">[docs]</a><span class="k">class</span> <span class="nc">VTT</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">LinearClassifierMixin</span><span class="p">,</span> <span class="n">TransformerMixin</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;The Variable Trigonometric Threshold (VTT) linear classifier class</span>
+
+<span class="sd">	Attributes:</span>
+<span class="sd">		coef_ (array-like) : Feature weights. Also known as the coefficients.</span>
+<span class="sd">		intercept (array-like) : This is the classifier bias. For a linear classifier also known as the intercept.</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">coef_</span> <span class="o">=</span> <span class="n">weights</span> <span class="c1"># Weights. Has to be named coef_ so scikit-learn will understand</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">intercept_</span> <span class="o">=</span> <span class="n">bias</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">B</span> <span class="o">=</span> <span class="p">{}</span> <span class="c1">#pass keys to set_params of the form &#39;b_{index}&#39; to treat index as an NER count and B[index] as the weight for the NER</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">y_predict</span> <span class="o">=</span> <span class="bp">None</span>
+	
+	<span class="k">def</span> <span class="nf">__get_vtt_angles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pvals</span><span class="p">,</span> <span class="n">nvals</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot; Fit the angles to the model</span>
+
+<span class="sd">		Args:</span>
+<span class="sd">			pvals (array-like) : positive values</span>
+<span class="sd">			nvals (array-like) : negative values</span>
+
+<span class="sd">		Returns: normalized coef_ values</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c1"># https://www.khanacademy.org/math/trigonometry/unit-circle-trig-func/inverse_trig_functions/v/inverse-trig-functions--arctan</span>
+		<span class="n">angles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">pvals</span><span class="p">,</span> <span class="n">nvals</span><span class="p">)</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">4</span>
+		<span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">angles</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">-</span><span class="n">angles</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">-</span><span class="n">angles</span><span class="p">)</span>
+		<span class="n">norm</span> <span class="o">=</span> <span class="n">csr_matrix</span><span class="p">(</span><span class="n">norm</span><span class="p">)</span>
+		<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">B</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+			<span class="n">norm</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
+		<span class="k">return</span> <span class="n">norm</span>
+
+<div class="viewcode-block" id="VTT.fit"><a class="viewcode-back" href="../reference/vtt.html#vtt.VTT.fit">[docs]</a>  	<span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+  		<span class="sd">&quot;&quot;&quot; Fit the VTT classifier model</span>
+
+<span class="sd">  		Args:</span>
+<span class="sd">  			X (sparse matrix, shape = [n_samples, n_features]) : Training data</span>
+<span class="sd">  			y (array-like, shape = [n_samples]) : Target values</span>
+<span class="sd">  		&quot;&quot;&quot;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">classes_</span> <span class="o">=</span> <span class="n">unique_labels</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+		<span class="n">X</span> <span class="o">=</span> <span class="n">csr_matrix</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span><span class="c1">#.tocsr()</span>
+		<span class="n">pvals</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="o">==</span><span class="mi">1</span><span class="p">),:]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+		<span class="n">nvals</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="o">!=</span><span class="mi">1</span><span class="p">),:]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+		
+		<span class="bp">self</span><span class="o">.</span><span class="n">coef_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_vtt_angles</span><span class="p">(</span><span class="n">pvals</span><span class="p">,</span> <span class="n">nvals</span><span class="p">)</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+		
+		<span class="n">pnvals</span> <span class="o">=</span> <span class="p">(</span><span class="n">nvals</span> <span class="o">+</span> <span class="n">pvals</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+		
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">intercept_</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">intercept_</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">pnvals</span><span class="p">)</span><span class="o">/</span><span class="mf">2.0</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+		
+		<span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">B</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+			<span class="c1">#self.intercept_ -= 1</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">coef_</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">b</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span><span class="o">/</span><span class="n">val</span></div>
+
+<div class="viewcode-block" id="VTT.set_params"><a class="viewcode-back" href="../reference/vtt.html#vtt.VTT.set_params">[docs]</a>	<span class="k">def</span> <span class="nf">set_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot; Set the parameters of the estimator.</span>
+
+<span class="sd">		Args:</span>
+<span class="sd">			bias (array-like) : bias of the estimator. Also known as the intercept</span>
+<span class="sd">			weights (array-like) : weights of the features. Also known as coeficients.</span>
+<span class="sd">			NER bias (array-like) : NER entities infering column position on X and bias value. Ex: `b_4=10, b_5=6`.</span>
+
+<span class="sd">		Example:</span>
+<span class="sd">			&gt;&gt;&gt; cls = VTT()</span>
+<span class="sd">			&gt;&gt;&gt; cls.set_params(b_4=10, b_5=6, b_6=8)</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="s1">&#39;bias&#39;</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">intercept_</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;bias&#39;</span><span class="p">]</span>
+		<span class="k">if</span> <span class="s1">&#39;weights&#39;</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">coef_</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;weights&#39;</span><span class="p">]</span>
+		<span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+			<span class="k">if</span> <span class="s1">&#39;b_&#39;</span> <span class="o">==</span> <span class="n">key</span><span class="p">[:</span><span class="mi">2</span><span class="p">]:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">B</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">:])]</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
+	
+<div class="viewcode-block" id="VTT.get_params"><a class="viewcode-back" href="../reference/vtt.html#vtt.VTT.get_params">[docs]</a>	<span class="k">def</span> <span class="nf">get_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">deep</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot; Get parameters for the estimator.</span>
+
+<span class="sd">		Args:</span>
+<span class="sd">			deep (boolean, optional) : If True, will return the parameters for this estimator and contained subobjects that are estimators.</span>
+
+<span class="sd">		Returns:</span>
+<span class="sd">			params : mapping of string to any contained subobjects that are estimators.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;weights&#39;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">coef_</span><span class="p">,</span> <span class="s1">&#39;bias&#39;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">intercept_</span><span class="p">}</span>
+		<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">B</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+			<span class="n">params</span><span class="p">[</span><span class="s1">&#39;b_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">)]</span> <span class="o">=</span> <span class="n">value</span>
+		<span class="k">return</span><span class="p">(</span><span class="n">params</span><span class="p">)</span></div>
+
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	### This is now handled by `LinearClassifierMixin`</span>
+<span class="sd">  	def predict(self, X):</span>
+<span class="sd">  		&quot;&quot;</span>
+
+<span class="sd">  		&quot;&quot;</span>
+<span class="sd">		values = X.dot(self.coef_.T)</span>
+<span class="sd">		values.X[:] = values.X + self.intercept_</span>
+
+<span class="sd">		result = values.sign().astype(int)</span>
+<span class="sd">		result[result==-1] = 0 # Change -1 values to 0</span>
+<span class="sd">		return result.toarray().ravel()</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	### This is now handed by `BaseEstimator`</span>
+<span class="sd">	def score(self, X, y):</span>
+<span class="sd">		print &#39;--- Scoring ---&#39;</span>
+<span class="sd">		print &#39;X&#39;,X</span>
+<span class="sd">		print &#39;y&#39;,y</span>
+<span class="sd">		y_predict = self.y_predict</span>
+<span class="sd">		mean_accuracy = (y_predict.toarray().T == y)</span>
+<span class="sd">		#print mean_accuracy</span>
+<span class="sd">		mean_accuracy = np.mean(mean_accuracy)</span>
+<span class="sd">		y_predict = y_predict.toarray(order=1).T</span>
+<span class="sd">		return mean_accuracy</span>
+<span class="sd">	&quot;&quot;&quot;</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Rocha, L. M., Kolchinsky, A., Correia, R. B. &amp; Wood, I. B..
+      Last updated on Apr 18, 2016.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.3.0b1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
