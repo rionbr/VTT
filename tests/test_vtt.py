@@ -4,13 +4,13 @@ from vtt import VTT
 
 
 def test_vtt():
-	""" Test TT """
+	""" Test VTT """
 
 	N = 20 # number of documents
 	F = 15 # number of features
 	
-	ones = np.ones((N*0.5,F*0.5), dtype=np.int)
-	zeros = np.zeros((N*0.5,F*0.5), dtype=np.int)
+	ones = np.ones((int(N*0.5),int(F*0.5)), dtype=np.int)
+	zeros = np.zeros((int(N*0.5),int(F*0.5)), dtype=np.int)
 	NER_counts = np.array(np.random.rand(N,1) * 10, dtype=np.int)
 	X1 = np.concatenate((ones,zeros), axis=1)
 	X2 = np.concatenate((zeros,ones), axis=1)
@@ -29,11 +29,11 @@ def test_vtt():
 	print y
 	print '---'
 
-	X_train = X[:N*0.9,:]
-	X_test = X[N*0.9:,:]
+	X_train = X[:int(N*0.9),:]
+	X_test = X[int(N*0.9):,:]
 
-	y_train = y[:N*0.9]
-	y_test = y[N*0.9:]
+	y_train = y[:int(N*0.9)]
+	y_test = y[int(N*0.9):]
 	#X_train = X_test = X
 	#y_train = y_train = y
 
@@ -73,6 +73,7 @@ def test_vtt():
 	print X_test.todense()
 	print 'y_test'
 	print y_test
+
 	X_test = csr_matrix(X_test)
 
 	y_predict = classifier.predict(X_test)
@@ -82,3 +83,4 @@ def test_vtt():
 
 	assert ( y_predict == y_test).all()
 
+test_vtt()

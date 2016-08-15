@@ -7,7 +7,7 @@ A linear classifier to be used in conjunction with the Scikit Learn python packa
 #    Luis Rocha <rocha@indiana.edu>
 #    Artemy Kolchinsky <artemyk@gmail.com >
 #    Rion Brattig Correia <rionbr@gmail.com>
-#    Ian B Wood <ibwood@indiana.edu >
+#    Ian B Wood <ibwood@indiana.edu>
 #    All rights reserved.
 #    MIT license.
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -81,7 +81,7 @@ class VTT(BaseEstimator, LinearClassifierMixin, TransformerMixin):
 		Args:
 			bias (array-like) : bias of the estimator. Also known as the intercept
 			weights (array-like) : weights of the features. Also known as coeficients.
-			NER bias (array-like) : NER entities infering column position on X and bias value. Ex: `b_4=10, b_5=6`.
+			NER biases (array-like) : NER entities infering column position on X and bias value. Ex: `b_4=10, b_5=6`.
 
 		Example:
 			>>> cls = VTT()
