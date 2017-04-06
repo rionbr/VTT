@@ -10,19 +10,22 @@ A linear classifier to be used in conjunction with the Scikit Learn python packa
 #    Ian B Wood <ibwood@indiana.edu>
 #    All rights reserved.
 #    MIT license.
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator
 from sklearn.linear_model.base import LinearClassifierMixin
+from sklearn.utils import check_array
+from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.multiclass import unique_labels
+from sklearn.exceptions import NotFittedError
 from scipy.sparse import csr_matrix
 import numpy as np
 
 __name__ = 'vtt'
-__version__ = '0.3'
+__version__ = '0.3.1'
 __release__ = '0.3.1b1'
 __authors__ = ' and '.join(['Luis M. Rocha', 'Artemy Kolchinsky', 'Rion Brattig Correia', 'Ian B. Wood'])
 __all__ = ['VTT']
 
-class VTT(BaseEstimator, LinearClassifierMixin, TransformerMixin):
+class VTT(BaseEstimator, LinearClassifierMixin):
 	"""The Variable Trigonometric Threshold (VTT) linear classifier class
 
 	Attributes:
@@ -48,6 +51,7 @@ class VTT(BaseEstimator, LinearClassifierMixin, TransformerMixin):
 		angles = np.arctan2(pvals, nvals)-np.pi/4
 		norm = np.maximum(np.minimum(angles, np.pi-angles), -1*np.pi-angles)
 		norm = csr_matrix(norm)
+		# Remove any weight from the NER features. These will be added later.
 		for key, value in self.B.items():
 			norm[0, key] = 0.
 		return norm
@@ -68,18 +72,57 @@ class VTT(BaseEstimator, LinearClassifierMixin, TransformerMixin):
 		
 		pnvals = (nvals + pvals).T
 		
+		# this if is necessary in case the bias is being set by GridSearchCV
 		if self.intercept_ is None:
 			self.intercept_ = -(self.coef_.dot(pnvals)/2.0)[0,0]
 		
 		for b, val in self.B.items():
-			#self.intercept_ -= 1
 			self.coef_[0,b] = 1./val
+
+		return self
+
+	def decision_function(self, X):
+		""" Predict confidence scores for samples.
+		The confidence score for a sample is the signed distance of that
+		sample to the hyperplane.
+		
+		Args:
+			X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+				Samples.
+		Returns:
+			array, shape=(n_samples,) if n_classes == 2 else (n_samples, n_classes)
+			Confidence scores per (sample, class) combination. In the binary
+			case, confidence score for self.classes_[1] where >0 means this
+			class would be predicted.
+
+		Note: This is a copy of the method in `sklearn.linear_model.base.LinearClassifierMixin()`,
+			changed the `check_array` to convert X to boolean.
+		"""
+		if not hasattr(self, 'coef_') or self.coef_ is None:
+			raise NotFittedError("This %(name)s instance is not fitted "
+								 "yet" % {'name': type(self).__name__})
+
+		# Number of NER features. These can be int
+		n_ner = len(self.B)
+
+		X_fea = X[ : , :-n_ner]
+		X_ner = X[ : , -n_ner:]
+
+		X_fea = check_array(X_fea, dtype=bool, accept_sparse='csr')
+		X_ner = check_array(X_ner, dtype=int, ensure_min_features=0, accept_sparse='csr')
+
+		n_features = self.coef_.shape[1]
+		if X.shape[1] != n_features:
+			raise ValueError("X has %d features per sample; expecting %d" % (X.shape[1], n_features))
+
+		scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
+		return scores.ravel() if scores.shape[1] == 1 else scores
 
 	def set_params(self, **params):
 		""" Set the parameters of the estimator.
 
 		Args:
-			bias (array-like) : bias of the estimator. Also known as the intercept
+			bias (array-like) : bias of the estimator. Also known as the intercept in a linear model.
 			weights (array-like) : weights of the features. Also known as coeficients.
 			NER biases (array-like) : NER entities infering column position on X and bias value. Ex: `b_4=10, b_5=6`.
 
@@ -94,6 +137,8 @@ class VTT(BaseEstimator, LinearClassifierMixin, TransformerMixin):
 		for key in params.keys():
 			if 'b_' == key[:2]:
 				self.B[int(key[2:])] = params[key]
+
+		return self
 	
 	def get_params(self, deep=True):
 		""" Get parameters for the estimator.
@@ -105,35 +150,9 @@ class VTT(BaseEstimator, LinearClassifierMixin, TransformerMixin):
 			params : mapping of string to any contained subobjects that are estimators.
 		"""
 		params = {'weights':self.coef_, 'bias':self.intercept_}
-		for key, value in self.B.items():
-			params['b_'+str(key)] = value
-		return(params)
-
-	"""
-	### This is now handled by `LinearClassifierMixin`
-  	def predict(self, X):
-  		""
-
-  		""
-		values = X.dot(self.coef_.T)
-		values.X[:] = values.X + self.intercept_
-
-		result = values.sign().astype(int)
-		result[result==-1] = 0 # Change -1 values to 0
-		return result.toarray().ravel()
-	"""
-
-	"""
-	### This is now handed by `BaseEstimator`
-	def score(self, X, y):
-		print '--- Scoring ---'
-		print 'X',X
-		print 'y',y
-		y_predict = self.y_predict
-		mean_accuracy = (y_predict.toarray().T == y)
-		#print mean_accuracy
-		mean_accuracy = np.mean(mean_accuracy)
-		y_predict = y_predict.toarray(order=1).T
-		return mean_accuracy
-	"""
+		if deep:
+			for key, value in self.B.items():
+				params['b_'+str(key)] = value
+		
+		return params
 
